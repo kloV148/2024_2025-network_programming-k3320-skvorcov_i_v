@@ -1,0 +1,35 @@
+---
+- name: Setup OSPF and NTP on mikrotik
+  hosts: mikrotik
+  gather_facts: false
+  tasks:
+
+    - name: setup NTP server
+      community.routeros.command:
+        commands:
+          - "/system ntp client set enabled=yes servers=pool.ntp.org"
+
+    - name: Setup loopback 
+      community.routeros.command:
+        commands:
+          - "/interface bridge add name=loopback0"
+          - "/ip address add address={{ router_id }}/32 interface=loopback0"
+
+    - name: Setup OSPF
+      community.routeros.command:
+        commands:
+          - "/routing ospf instance add name=v2inst version=2 router-id={{ router_id }}" 
+          - "/routing ospf area add name=backbone_v2 area-id=0.0.0.0 instance=v2inst"
+          - "/routing ospf interface-template add networks=0.0.0.0/0 area=backbone_v2"
+
+    - name: gather all facts
+      community.routeros.facts:
+        gather_subset: all
+
+    - name: gather ospf instance facts
+      debug:
+        var: ansible_net_ospf_instance
+
+    - name: gather ospf neighbours
+      debug:
+        var: ansible_net_ospf_neighbor
