@@ -1,0 +1,33 @@
+- name: Get info about devices
+  set_fact:
+    devices: "{{ lookup('file', info_path) | from_json }}"
+
+- name: Configure devices
+  community.routeros.command:
+    commands:
+      - "/system identity set name={{ router_name  }}"
+      - "/ip address add address={{ hostvars[inventory_hostname].ip_address }} interface=ether1"
+  delegate_to: "{{ item.value.primary_ip.address.split('/')[0] }}"
+  loop: "{{ devices }}"
+  when:
+    - inventory_hostname == item.value.primary_ip.address.split('/')[0]
+
+- name: Get serial nubmer
+  community.routeros.command:
+    commands:
+      - /system license print
+  register: serial_number_info
+
+- name: DEbug
+  debug:
+    msg: "{{ serial_number_info  }}"
+
+- name: Update device serial in NetBox
+  netbox.netbox.netbox_device:
+    netbox_url: "{{ netbox_url }}"
+    netbox_token: "{{ token }}"
+    validate_certs: false
+    data:
+      name: "{{ hostvars[inventory_hostname].router_name }}"
+      serial: "{{ serial_number_info.stdout_lines[0][0].split(' ')[1]}} "
+    state: present

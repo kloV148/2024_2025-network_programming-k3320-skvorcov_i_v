@@ -1,0 +1,10 @@
+- name: Get device data
+  set_fact:
+    devices: "{{ query('netbox.netbox.nb_lookup', 'devices',
+                  api_endpoint=netbox_url,
+                  token=token) }}"
+
+- name: Save data
+  copy:
+    content: "{{ devices }}"
+    dest: info.json

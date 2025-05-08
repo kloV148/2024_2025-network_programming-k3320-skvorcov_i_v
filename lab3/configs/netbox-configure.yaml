@@ -1,0 +1,8 @@
+- hosts: mikrotik
+  gather_facts: false
+  vars:
+    info_path: "info.json"
+    netbox_url: "http://10.172.247.4:8000"
+    token: 3b022358ac8d38178b65b7f6e3573c34970f095e
+  roles:
+    - netbox-configure
